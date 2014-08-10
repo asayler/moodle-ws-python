@@ -26,6 +26,4 @@ test:
 
 clean:
 	$(RM) *.pyc
-	$(RM) $(MOODLE)/*.pyc
 	$(RM) *~
-	$(RM) $(MOODLE)/*~
