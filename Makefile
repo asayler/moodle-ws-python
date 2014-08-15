@@ -19,13 +19,11 @@ all:
 	$(ECHO) "This is a python project; nothing to build!"
 
 reqs: $(REQUIRMENTS)
-	$(PIP) install -r $(REQUIRMENTS)
+	$(PIP) install -r $(REQUIRMENTS) -U
 
 test:
 	$(PYTHON) -m unittest discover -v -p $(UNITTEST_PATTERN)
 
 clean:
 	$(RM) *.pyc
-	$(RM) $(MOODLE)/*.pyc
 	$(RM) *~
-	$(RM) $(MOODLE)/*~
