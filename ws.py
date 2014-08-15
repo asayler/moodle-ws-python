@@ -6,12 +6,15 @@
 
 # Moodle Package
 
+
 import requests
+
 
 _STAT_OK = 200
 
 _END_AUTH = "login/token.php"
 _END_REST = "webservice/rest/server.php"
+
 
 ### Exceptions ###
 
@@ -48,6 +51,8 @@ class WS(object):
         self.host = host
         self.token = token
 
+    ## Auth Methods ##
+
     def authenticate(self, user, password, service, error=False):
         url = "{:s}/{:s}".format(self.host, _END_AUTH)
         args = {'username': user, 'password': password, 'service': service}
@@ -76,29 +81,89 @@ class WS(object):
         url = "{:s}/{:s}".format(self.host, _END_REST)
         args = {'moodlewsrestformat': 'json', 'wstoken': self.token, 'wsfunction': function}
         if params:
-            args += params
+            args.update(params)
+        print(args)
         r = requests.post(url, params=args)
         r.raise_for_status()
         res = r.json()
-        if 'exception' in res:
-            msg = "{:s}: {:s}".format(res['errorcode'], res['message'])
-            raise WSError(msg)
+        print(res)
+        if res:
+            if 'exception' in res:
+                msg = "{:s}: {:s}".format(res['errorcode'], res['message'])
+                raise WSError(msg)
+            else:
+                return res
         else:
-            return res
+            return None
 
     ## Raw Endpoints ##
 
     @requires_auth
     def core_webservice_get_site_info(self):
         function = 'core_webservice_get_site_info'
-        params = None
+        params = {}
         return self.make_request(function, params)
 
+    @requires_auth
+    def core_grades_get_grades(self, crs_id, component="", act_id=None, usr_ids = []):
+        function = 'core_grades_get_grades'
+        params = {}
+        params['courseid'] = int(crs_id)
+        if component:
+            params['component'] = str(component)
+        if act_id:
+            params['activityid'] = int(act_id)
+        if user_ids:
+            params.update(self._build_array('userids', usr_ids))
+        return self.make_request(function, params)
+
+    @requires_auth
+    def mod_assign_get_assignments(self, crs_ids):
+        function = 'mod_assign_get_assignments'
+        params = {}
+        params.update(self._build_array('courseids', crs_ids))
+        return self.make_request(function, params)
+
+    @requires_auth
+    def mod_assign_get_grades(self, asn_ids):
+        function = 'mod_assign_get_grades'
+        params = {}
+        params.update(self._build_array('assignmentids', asn_ids))
+        return self.make_request(function, params)
+
+    @requires_auth
+    def mod_assign_save_grade(self, asn_id, usr_id, grade,
+                              attempt=-1, addattempt=0, state="Graded", applyall=1,
+                              comment="", comment_format=0, file_mgr=0):
+        function = 'mod_assign_save_grade'
+        params = {}
+        params['assignmentid'] = int(asn_id)
+        params['userid'] = int(usr_id)
+        params['grade'] = float(grade)
+        params['attemptnumber'] = int(attempt)
+        params['addattempt'] = int(addattempt)
+        params['workflowstate'] = str(state)
+        params['applytoall'] = int(applyall)
+        params['plugindata[assignfeedbackcomments_editor][text]'] = str(comment)
+        params['plugindata[assignfeedbackcomments_editor][format]'] = int(comment_format)
+        params['plugindata[files_filemanager]'] = int(file_mgr)
+        return self.make_request(function, params)
 
     ## Constructors ##
     @requires_auth
     def get_WSUser(self):
         return WSUser(self)
+
+
+    ## Helpers ##
+    def _build_array(self, key, vals):
+        array = {}
+        index = 0
+        for val in vals:
+            array['{:s}[{:d}]'.format(key, index)] = int(val)
+            index += 1
+        return array
+
 
 class WSUser(WS):
 
