@@ -9,9 +9,6 @@
 
 import requests
 
-
-_STAT_OK = 200
-
 _END_AUTH = "login/token.php"
 _END_REST = "webservice/rest/server.php"
 
@@ -82,11 +79,9 @@ class WS(object):
         args = {'moodlewsrestformat': 'json', 'wstoken': self.token, 'wsfunction': function}
         if params:
             args.update(params)
-        print(args)
         r = requests.post(url, params=args)
         r.raise_for_status()
         res = r.json()
-        print(res)
         if res:
             if 'exception' in res:
                 msg = "{:s}: {:s}".format(res['errorcode'], res['message'])
@@ -113,8 +108,46 @@ class WS(object):
             params['component'] = str(component)
         if act_id:
             params['activityid'] = int(act_id)
-        if user_ids:
+        if usr_ids:
             params.update(self._build_array('userids', usr_ids))
+        return self.make_request(function, params)
+
+    @requires_auth
+    def core_files_get_files(self, cxt_id, component, itm_id, filearea, filepath, filename,
+                             modified_ts=None, cxt_level=None, cxt_instanceid=None):
+        function = 'core_files_upload'
+        params = {}
+        params['contextid'] = int(cxt_id)
+        params['component'] = str(component)
+        params['itemid'] = int(itm_id)
+        params['filearea'] = str(filearea)
+        params['filepath'] = str(filepath)
+        params['filename'] = str(filename)
+        if modified_ts:
+            params['modified'] = int(modified_ts)
+        if cxt_level:
+            params['contextlevel'] = str(cxt_level)
+        if cxt_instanceid:
+            params['instanceid'] = int(cxt_instance_id)
+        return self.make_request(function, params)
+
+    @requires_auth
+    def core_files_upload(self, itm_id, component, filearea, filepath, filename, filecontent,
+                          cxt_id=None, cxt_level=None, cxt_instanceid=None):
+        function = 'core_files_upload'
+        params = {}
+        params['itemid'] = int(itm_id)
+        params['component'] = str(component)
+        params['filearea'] = str(filearea)
+        params['filepath'] = str(filepath)
+        params['filename'] = str(filename)
+        params['filecontent'] = str(filecontent) #Base64?
+        if cxt_id:
+            params['contextid'] = int(cxt_id)
+        if cxt_level:
+            params['contextlevel'] = str(cxt_level)
+        if cxt_instanceid:
+            params['instanceid'] = int(cxt_instance_id)
         return self.make_request(function, params)
 
     @requires_auth
@@ -153,7 +186,6 @@ class WS(object):
     @requires_auth
     def get_WSUser(self):
         return WSUser(self)
-
 
     ## Helpers ##
     def _build_array(self, key, vals):
