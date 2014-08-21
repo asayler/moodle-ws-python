@@ -173,7 +173,7 @@ class WS(object):
                               comment="", comment_format=0, file_mgr=0):
 
         # For some reason, Moodle chokes on '<' in the comment field...
-        comment = comment[start:end].translate(string.maketrans("<", "?"))
+        comment = comment.translate(string.maketrans("<", "?"))
 
         function = 'mod_assign_save_grade'
         params = {}
