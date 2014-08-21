@@ -7,7 +7,10 @@
 # Moodle Package
 
 
+import string
+
 import requests
+
 
 _END_AUTH = "login/token.php"
 _END_REST = "webservice/rest/server.php"
