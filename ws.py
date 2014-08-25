@@ -7,7 +7,10 @@
 # Moodle Package
 
 
+import string
+
 import requests
+
 
 _END_AUTH = "login/token.php"
 _END_REST = "webservice/rest/server.php"
@@ -168,6 +171,10 @@ class WS(object):
     def mod_assign_save_grade(self, asn_id, usr_id, grade,
                               attempt=-1, addattempt=0, state="Graded", applyall=1,
                               comment="", comment_format=0, file_mgr=0):
+
+        # For some reason, Moodle chokes on '<' in the comment field...
+        comment = comment.translate(string.maketrans("<", "?"))
+
         function = 'mod_assign_save_grade'
         params = {}
         params['assignmentid'] = int(asn_id)
