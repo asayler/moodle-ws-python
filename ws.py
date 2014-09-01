@@ -116,6 +116,13 @@ class WS(object):
         return self.make_request(function, params)
 
     @requires_auth
+    def core_user_get_users(self, criteria):
+        function = 'core_user_get_users'
+        params = {}
+        params.update(self._build_tuple_array('criteria', criteria))
+        return self.make_request(function, params)
+
+    @requires_auth
     def core_files_get_files(self, cxt_id, component, itm_id, filearea, filepath, filename,
                              modified_ts=None, cxt_level=None, cxt_instanceid=None):
         function = 'core_files_upload'
@@ -203,6 +210,15 @@ class WS(object):
             index += 1
         return array
 
+    def _build_tuple_array(self, key, tuples):
+        array = {}
+        index = 0
+        for tup in tuples:
+            array['{:s}[{:d}][key]'.format(key, index)] = tup[0]
+            array['{:s}[{:d}][value]'.format(key, index)] = tup[1]
+            index += 1
+        return array
+
 
 class WSUser(WS):
 
@@ -212,7 +228,7 @@ class WSUser(WS):
         self.host = ws.host
         self.token = ws.token
 
-        # Get Data
+        # Get User Site Data
         data = self.core_webservice_get_site_info()
         self.username = data['username']
         self.userid = data['userid']
@@ -220,3 +236,7 @@ class WSUser(WS):
         self.last = data['lastname']
         self.full = data['fullname']
         self.functions = data['functions']
+
+        # Get User Details
+        data = ws.core_user_get_users([('id', self.userid)])
+        self.email = data['users'][0]['email']
