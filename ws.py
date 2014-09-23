@@ -56,8 +56,16 @@ class WS(object):
     def authenticate(self, user, password, service, error=False):
         url = "{:s}/{:s}".format(self.host, _END_AUTH)
         args = {'username': user, 'password': password, 'service': service}
-        r = requests.get(url, params=args)
-        r.raise_for_status()
+        try:
+            r = requests.get(url, params=args)
+        except requests.exceptions.SSLError as e:
+            msg = "SSL verification failed for '{:s}': {:s}".format(self.host, e)
+            raise WSError(msg)
+        try:
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            msg = "Auth request to '{:s}' failed: {:s}".format(self.host, e)
+            raise WSError(msg)
         res = r.json()
         if 'error' in res:
             if error:
@@ -82,8 +90,16 @@ class WS(object):
         args = {'moodlewsrestformat': 'json', 'wstoken': self.token, 'wsfunction': function}
         if params:
             args.update(params)
-        r = requests.post(url, params=args)
-        r.raise_for_status()
+        try:
+            r = requests.post(url, params=args)
+        except requests.exceptions.SSLError as e:
+            msg = "SSL verification failed for '{:s}': {:s}".format(self.host, e)
+            raise WSError(msg)
+        try:
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            msg = "Request to '{:s}' failed: {:s}".format(self.host, e)
+            raise WSError(msg)
         res = r.json()
         if res:
             if 'exception' in res:
