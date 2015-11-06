@@ -154,7 +154,7 @@ class WS(object):
         if cxt_level:
             params['contextlevel'] = str(cxt_level)
         if cxt_instanceid:
-            params['instanceid'] = int(cxt_instance_id)
+            params['instanceid'] = int(cxt_instanceid)
         return self.make_request(function, params)
 
     @requires_auth
@@ -173,7 +173,7 @@ class WS(object):
         if cxt_level:
             params['contextlevel'] = str(cxt_level)
         if cxt_instanceid:
-            params['instanceid'] = int(cxt_instance_id)
+            params['instanceid'] = int(cxt_instanceid)
         return self.make_request(function, params)
 
     @requires_auth
