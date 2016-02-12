@@ -54,6 +54,7 @@ class WS(object):
     ## Auth Methods ##
 
     def authenticate(self, user, password, service, error=False):
+        self.username = user
         url = "{:s}/{:s}".format(self.host, _END_AUTH)
         args = {'username': user, 'password': password, 'service': service}
         try:
@@ -245,14 +246,38 @@ class WSUser(WS):
         self.token = ws.token
 
         # Get User Site Data
-        data = self.core_webservice_get_site_info()
-        self.username = data['username']
-        self.userid = data['userid']
-        self.first = data['firstname']
-        self.last = data['lastname']
-        self.full = data['fullname']
-        self.functions = data['functions']
+        # print("get_site_info")
+        # data = self.core_webservice_get_site_info()
+        # print("data = {}".format(data))
+        # self.username = data['username']
+        # self.userid = data['userid']
+        # self.first = data['firstname']
+        # self.last = data['lastname']
+        # self.full = data['fullname']
+        # self.functions = data['functions']
 
         # Get User Details
-        data = ws.core_user_get_users([('id', self.userid)])
-        self.email = data['users'][0]['email']
+#        data = ws.core_user_get_users([('id', self.userid)])
+        self.username = ws.username
+        data = ws.core_user_get_users([('username', self.username)])
+        self.userid = data['users'][0]['id']
+
+        if 'firstname' in data['users'][0]:
+            self.first = data['users'][0]['firstname']
+        else:
+            self.first = ""
+
+        if 'lastname' in data['users'][0]:
+            self.last = data['users'][0]['lastname']
+        else:
+            self.last = ""
+
+        if 'fullname' in data['users'][0]:
+            self.full = data['users'][0]['fullname']
+        else:
+            self.full = ""
+
+        if 'email' in data['users'][0]:
+            self.email = data['users'][0]['email']
+        else:
+            self.email = ""
