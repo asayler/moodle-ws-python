@@ -8,12 +8,19 @@
 
 
 import string
+import logging
+import traceback
 
 import requests
 
 
 _END_AUTH = "login/token.php"
 _END_REST = "webservice/rest/server.php"
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.NullHandler())
 
 
 ### Exceptions ###
@@ -241,43 +248,100 @@ class WSUser(WS):
 
     def __init__(self, ws):
 
-        # Setup Connection
+        # Check Args
+        if not ws.is_authenticated():
+            raise ValueError("'ws' must be authenticated")
+        if not ws.host:
+            raise ValueError("Requires 'ws' host")
+        if not ws.token:
+            raise ValueError("Requires 'ws' token")
+
+        # Get Raw Data
         self.host = ws.host
         self.token = ws.token
 
-        # Get User Site Data
-        # print("get_site_info")
-        # data = self.core_webservice_get_site_info()
-        # print("data = {}".format(data))
-        # self.username = data['username']
-        # self.userid = data['userid']
-        # self.first = data['firstname']
-        # self.last = data['lastname']
-        # self.full = data['fullname']
-        # self.functions = data['functions']
-
-        # Get User Details
-#        data = ws.core_user_get_users([('id', self.userid)])
-        self.username = ws.username
-        data = ws.core_user_get_users([('username', self.username)])
-        self.userid = data['users'][0]['id']
-
-        if 'firstname' in data['users'][0]:
-            self.first = data['users'][0]['firstname']
+        # Use core_webservice_get_site_info
+        logger.debug("Trying core_webservice_get_site_info...")
+        try:
+            data = self.core_webservice_get_site_info()
+        except Exception as e:
+            output = "{}\n".format(e)
+            output += traceback.format_exc()
+            logger.error(output)
         else:
-            self.first = ""
+            logger.debug("data = {}".format(data))
+            self.userid = data.get('userid', "")
+            self.username = data.get('username', "")
+            self.email = data.get('email', "")
+            self.first = data.get('firstname', "")
+            self.last = data.get('lastname', "")
+            self.full = data.get('fullname', "")
 
-        if 'lastname' in data['users'][0]:
-            self.last = data['users'][0]['lastname']
-        else:
-            self.last = ""
+        # Bail out early if all data is present
+        if (getattr(self, 'userid', None) and \
+            getattr(self, 'username', None) and \
+            getattr(self, 'email', None) and \
+            getattr(self, 'first', None) and \
+            getattr(self, 'last', None) and \
+            getattr(self, 'full', None)):
+            return
 
-        if 'fullname' in data['users'][0]:
-            self.full = data['users'][0]['fullname']
+        # Use core_user_get_users
+        logger.debug("Trying core_user_get_users...")
+        if getattr(self, 'userid', None):
+            key = 'id'
+            value = self.userid
+        elif getattr(self, 'username', None):
+            key = 'username'
+            value = self.username
+        elif getattr(ws, 'username', None):
+            key = 'username'
+            value = ws.username
         else:
-            self.full = ""
+            raise ValueError("Requires 'userid' or 'username' to continue")
+        try:
+            data = ws.core_user_get_users([(key, value)])
+        except Exception as e:
+            output = "{}\n".format(e)
+            output += traceback.format_exc()
+            logger.error(output)
+        else:
+            logger.debug("data = {}".format(data))
+            users = data['users']
+            if (len(users) > 1):
+                raise ValueError("Multiple users returned")
+            user = data['users'][0]
+            logger.debug("user = {}".format(user))
+            if not getattr(self, 'userid', None):
+                self.userid = user['id']
+            if not getattr(self, 'username', None):
+                self.username = user['username']
+            if not getattr(self, 'email', None):
+                self.email = user.get('email', "")
+            if not getattr(self, 'first', None):
+                self.first = user.get('firstname', "")
+            if not getattr(self, 'last', None):
+                self.last = user.get('lastname', "")
+            if not getattr(self, 'full', None):
+                self.full = user.get('fullname', "")
 
-        if 'email' in data['users'][0]:
-            self.email = data['users'][0]['email']
-        else:
-            self.email = ""
+        # Split fullname if necessary
+        if not getattr(self, 'first', None):
+            if getattr(self, 'full', ""):
+                self.first = getattr(self, 'full', "").split()[0]
+        if not getattr(self, 'last', None):
+            if getattr(self, 'full', ""):
+                self.last = getattr(self, 'full', "").split()[-1]
+
+        # Raise error if missing key data
+        if not getattr(self, 'token', None):
+            raise ValueError("Missing 'token'")
+        if not getattr(self, 'userid', None):
+            raise ValueError("Missing 'userid'")
+        if not getattr(self, 'username', None):
+            raise ValueError("Missing 'username'")
+        if not getattr(self, 'email', None):
+            raise ValueError("Missing 'email'")
+
+        # Return
+        return
