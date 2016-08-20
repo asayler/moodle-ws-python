@@ -147,6 +147,15 @@ class WS(object):
         return self.make_request(function, params)
 
     @requires_auth
+    def core_enrol_get_enrolled_users(self, crs_id, options=None):
+        function = 'core_enrol_get_enrolled_users'
+        params = {}
+        params['courseid'] = int(crs_id)
+        if options:
+            params.update(self._build_tuple_array('options', options, keyname='name'))
+        return self.make_request(function, params)
+
+    @requires_auth
     def core_files_get_files(self, cxt_id, component, itm_id, filearea, filepath, filename,
                              modified_ts=None, cxt_level=None, cxt_instanceid=None):
         function = 'core_files_upload'
