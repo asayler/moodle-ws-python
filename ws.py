@@ -234,12 +234,12 @@ class WS(object):
             index += 1
         return array
 
-    def _build_tuple_array(self, key, tuples):
+    def _build_tuple_array(self, key, tuples, keyname='key', valuename='value'):
         array = {}
         index = 0
         for tup in tuples:
-            array['{:s}[{:d}][key]'.format(key, index)] = tup[0]
-            array['{:s}[{:d}][value]'.format(key, index)] = tup[1]
+            array['{:s}[{:d}][{:s}]'.format(key, index, keyname)] = tup[0]
+            array['{:s}[{:d}][{:s}]'.format(key, index, valuename)] = tup[1]
             index += 1
         return array
 
